@@ -275,14 +275,14 @@
     #modalClose:hover { background: rgba(0,0,0,0.12); }
 
     /* =========================
-       Popup MFV (estilo + badge + barra)
+       Popup MFV (alineación derecha + barra corta + marca 70%)
        ========================= */
     .mfv-popup .maplibregl-popup-content{
       border-radius: 12px;
       padding: 10px 10px 10px 10px;
       box-shadow: 0 10px 28px rgba(0,0,0,0.25);
       font-family: sans-serif;
-      min-width: 260px;
+      min-width: 280px;
     }
     .mfv-popup .maplibregl-popup-close-button{
       font-size: 18px;
@@ -293,14 +293,8 @@
     .mfv-pop-head{
       display:flex;
       align-items:center;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content: flex-end; /* solo badge a la derecha */
       margin: 0 0 8px 0;
-    }
-    .mfv-pop-title{
-      font-weight: 800;
-      font-size: 13px;
-      margin: 0;
     }
     .mfv-badge{
       width: 12px;
@@ -314,30 +308,51 @@
     .mfv-pop-grid{
       display:grid;
       grid-template-columns: 1fr;
-      gap: 6px;
+      gap: 8px;
       font-size: 12.5px;
       line-height: 1.25;
     }
+
+    /* filas tipo “label | value” con valores alineados a la derecha */
     .mfv-row{
       display:flex;
       justify-content: space-between;
-      gap:10px;
+      align-items: baseline;
+      gap: 12px;
       border-top: 1px solid rgba(0,0,0,0.08);
-      padding-top: 6px;
+      padding-top: 8px;
     }
     .mfv-row:first-child{ border-top:0; padding-top:0; }
 
     .mfv-k{ font-weight: 700; opacity: 0.75; white-space: nowrap; }
-    .mfv-v{ font-weight: 700; text-align:right; }
-    .mfv-v.mfv-wrap{ font-weight: 600; text-align:left; opacity: 0.9; }
+    .mfv-v{ font-weight: 700; margin-left: auto; text-align:right; }
 
+    /* Afección en 2 líneas, valor alineado a la derecha pero con wrap */
+    .mfv-row.mfv-stack{
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
+    .mfv-row.mfv-stack .mfv-v{
+      text-align: right;
+      font-weight: 600;
+      opacity: 0.92;
+      white-space: normal;
+    }
+
+    /* Barra de confianza más corta, con marca suave al 70% */
+    .mfv-bar-wrap{
+      display:flex;
+      justify-content:flex-end;
+    }
     .mfv-bar{
+      position: relative;
       height: 10px;
+      width: 180px;               /* <-- más corta */
       border-radius: 999px;
       background: rgba(0,0,0,0.08);
       overflow: hidden;
       border: 1px solid rgba(0,0,0,0.10);
-      margin-top: 6px;
     }
     .mfv-bar > div{
       height: 100%;
@@ -345,9 +360,20 @@
       background: rgba(0,0,0,0.55);
       border-radius: 999px;
     }
+    .mfv-mark70{
+      position:absolute;
+      top: -3px;
+      bottom: -3px;
+      left: 70%;
+      width: 1px;
+      background: rgba(0,0,0,0.22);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.35);
+      pointer-events:none;
+    }
     .mfv-bar-note{
       font-size: 11px;
       opacity: 0.7;
+      text-align: right;
       margin-top: 4px;
     }
   </style>
@@ -809,7 +835,7 @@
     }
 
     // =========================
-    // POPUP (badge por clase + barrita de confianza)
+    // POPUP (sin título, valores a la derecha, barra corta + marca 70%)
     // =========================
     let mfvPopup = null;
 
@@ -829,15 +855,13 @@
 
       const probNum = clamp01(props?.prob);
       const probText = (probNum === null) ? '—' : formatProbPct(probNum);
+      const barWidth = (probNum === null) ? 0 : probNum;
 
       const cls = classFromFeatureForYear(props, activeYear);
       const badgeColor = colorForClass(cls);
 
-      const barWidth = (probNum === null) ? 0 : probNum;
-
       return `
         <div class="mfv-pop-head">
-          <div class="mfv-pop-title">Tesela MFE</div>
           <div class="mfv-badge" style="background:${badgeColor};"></div>
         </div>
 
@@ -847,20 +871,24 @@
             <div class="mfv-v">${sup}</div>
           </div>
 
-          <div class="mfv-row" style="flex-direction:column; gap:4px;">
+          <div class="mfv-row mfv-stack">
             <div class="mfv-k">Afección:</div>
-            <div class="mfv-v mfv-wrap">${resumen}</div>
+            <div class="mfv-v">${resumen}</div>
           </div>
 
-          <div class="mfv-row" style="flex-direction:column; align-items:stretch; gap:6px;">
-            <div style="display:flex; justify-content:space-between; gap:10px;">
+          <div class="mfv-row mfv-stack">
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:baseline;">
               <div class="mfv-k">Confianza:</div>
               <div class="mfv-v">${probText}</div>
             </div>
-            <div class="mfv-bar" aria-label="Confianza">
-              <div style="width:${barWidth}%;"></div>
+
+            <div class="mfv-bar-wrap">
+              <div class="mfv-bar" aria-label="Confianza">
+                <div style="width:${barWidth}%;"></div>
+                <div class="mfv-mark70" title="70%"></div>
+              </div>
             </div>
-            <div class="mfv-bar-note">0–100%</div>
+            <div class="mfv-bar-note">Marca de referencia: 70%</div>
           </div>
         </div>
       `;
@@ -878,7 +906,7 @@
       mfvPopup = new maplibregl.Popup({
         closeButton: true,
         closeOnClick: true,
-        maxWidth: '340px',
+        maxWidth: '360px',
         offset: 10
       })
       .setLngLat(lngLat)
