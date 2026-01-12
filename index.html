@@ -72,21 +72,17 @@
 
     /* Plegado: ocultamos el contenido, pero dejamos el toggle visible
        y lo colocamos “en el margen” (a la izquierda de donde estaba el panel). */
-    #uiPanel.collapsed {
-      width: 0;
-    }
+    #uiPanel.collapsed { width: 0; }
     #uiPanel.collapsed .panel-wrap {
       width: 0;
       background: transparent;
       box-shadow: none;
       overflow: visible;
     }
-    #uiPanel.collapsed .panel-content {
-      display: none;
-    }
+    #uiPanel.collapsed .panel-content { display: none; }
     #uiPanel.collapsed #panelToggle {
       right: auto;
-      left: -18px;          /* queda en el margen izquierdo del “anclaje” */
+      left: -18px;
       top: 50%;
       transform: translateY(-50%);
       border-radius: 10px 0 0 10px;
@@ -295,6 +291,31 @@
       font-size: 13px;
     }
     #modalClose:hover { background: rgba(0,0,0,0.12); }
+
+    /* =========================
+       Popup (tesela)
+       ========================= */
+    .mfv-popup {
+      font-family: sans-serif;
+      font-size: 12px;
+      line-height: 1.25;
+      min-width: 220px;
+    }
+    .mfv-popup .row {
+      display: flex;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .mfv-popup .k {
+      font-weight: 700;
+      white-space: nowrap;
+      opacity: 0.85;
+      flex: 0 0 auto;
+    }
+    .mfv-popup .v {
+      opacity: 0.95;
+      word-break: break-word;
+    }
   </style>
 </head>
 
@@ -552,10 +573,13 @@
       panelOpen = open;
       if (panelOpen) {
         uiPanel.classList.remove('collapsed');
-        toggleIcon.textContent = '❯'; // indica “plegar hacia la derecha”
+        // Cerrado (cuando se pulse) = hacia fuera; Abierto = hacia fuera para cerrar.
+        // Según tu regla: cerrada -> flecha hacia dentro (se va a abrir),
+        // abierta -> flecha hacia fuera (se va a cerrar).
+        toggleIcon.textContent = '❯'; // panel abierto, indica "cierra hacia derecha"
       } else {
         uiPanel.classList.add('collapsed');
-        toggleIcon.textContent = '❮'; // indica “desplegar hacia la izquierda”
+        toggleIcon.textContent = '❮'; // panel cerrado, indica "abre hacia izquierda"
       }
     }
     panelToggle.addEventListener('click', (e) => {
@@ -626,7 +650,7 @@
         btn.textContent = String(y);
         btn.dataset.year = String(y);
         btn.addEventListener('click', () => {
-          // IMPORTANTE: cambiar orto NO cambia año temático
+          // Cambiar orto NO cambia año temático
           setBasemapYear(y);
           closeBasemapPanel();
         });
@@ -713,7 +737,7 @@
       const fieldName = activeFieldForYear(year);
       yearLabel.textContent = String(year);
 
-      // relleno + borde del MISMO color (como la versión anterior)
+      // relleno + borde del MISMO color
       if (map.getLayer('mfv-fill')) map.setPaintProperty('mfv-fill', 'fill-color', colorExprForField(fieldName));
       if (map.getLayer('mfv-line')) map.setPaintProperty('mfv-line', 'line-color', colorExprForField(fieldName));
 
@@ -731,6 +755,65 @@
       toggles.forEach(cb => cb.addEventListener('change', apply));
       allBtn.addEventListener('click', () => { toggles.forEach(cb => cb.checked = true); apply(); });
       noneBtn.addEventListener('click', () => { toggles.forEach(cb => cb.checked = false); apply(); });
+    }
+
+    // =========================
+    // Popup (tesela)
+    // =========================
+    function escapeHtml(v) {
+      const s = String(v ?? '');
+      return s
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function formatNumber(v, decimals = 2) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return String(v ?? '');
+      return n.toFixed(decimals);
+    }
+
+    function popupHtml(props) {
+      const id = escapeHtml(props?.id);
+      const sup = escapeHtml(formatNumber(props?.sup, 2));
+      const resumen = escapeHtml(props?.resumen);
+      const prob = escapeHtml(formatNumber(props?.prob, 2));
+
+      return `
+        <div class="mfv-popup">
+          <div class="row"><div class="k">Tesela MFE:</div><div class="v">${id}</div></div>
+          <div class="row"><div class="k">Superficie (ha):</div><div class="v">${sup}</div></div>
+          <div class="row"><div class="k">Afección:</div><div class="v">${resumen}</div></div>
+          <div class="row"><div class="k">Confianza:</div><div class="v">${prob}</div></div>
+        </div>
+      `;
+    }
+
+    let mfvPopup = null;
+
+    function bindMfvClickPopup() {
+      // Cursor "clicable"
+      map.on('mouseenter', 'mfv-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'mfv-fill', () => { map.getCanvas().style.cursor = ''; });
+
+      map.on('click', 'mfv-fill', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        const f = e.features[0];
+
+        if (mfvPopup) mfvPopup.remove();
+        mfvPopup = new maplibregl.Popup({
+          closeButton: true,
+          closeOnClick: true,
+          maxWidth: '260px',
+          offset: 10
+        })
+          .setLngLat(e.lngLat)
+          .setHTML(popupHtml(f.properties || {}))
+          .addTo(map);
+      });
     }
 
     // =========================
@@ -773,6 +856,9 @@
           'line-opacity': 0.95
         }
       });
+
+      // Popup clic
+      bindMfvClickPopup();
 
       ensureBasemapBelow();
       applyYearStyle(activeYear);
