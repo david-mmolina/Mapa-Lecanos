@@ -31,7 +31,7 @@
       background: rgba(255,255,255,0.92);
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.22);
-      overflow: hidden; /* sin “huecos” */
+      overflow: hidden;
     }
 
     .panel-section {
@@ -42,9 +42,7 @@
     .panel-section:last-child { border-bottom: 0; }
 
     /* =========================
-       Toggle a la DERECHA del bloque
-       - Abierto: pegado a la derecha del panel
-       - Cerrado: queda en el margen, bien visible, sin irse al borde inferior
+       Toggle panel
        ========================= */
     #panelToggle {
       position: absolute;
@@ -70,8 +68,6 @@
       line-height: 1;
     }
 
-    /* Plegado: ocultamos el contenido, pero dejamos el toggle visible
-       y lo colocamos “en el margen” (a la izquierda de donde estaba el panel). */
     #uiPanel.collapsed { width: 0; }
     #uiPanel.collapsed .panel-wrap {
       width: 0;
@@ -135,10 +131,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .bm-caret {
-      font-size: 14px;
-      opacity: 0.8;
-    }
+    .bm-caret { font-size: 14px; opacity: 0.8; }
 
     .bm-panel {
       display: none;
@@ -223,7 +216,7 @@
     }
 
     /* =========================
-       Scrollbar horizontal (año MFV) debajo de la leyenda
+       Scrollbar horizontal (año MFV)
        ========================= */
     .year-row {
       display: flex;
@@ -237,10 +230,7 @@
       white-space: nowrap;
       flex: 0 0 auto;
     }
-    #yearSlider {
-      width: 100%;
-      flex: 1 1 auto;
-    }
+    #yearSlider { width: 100%; flex: 1 1 auto; }
     .year-hint {
       font-size: 11px;
       opacity: 0.7;
@@ -269,16 +259,8 @@
       padding: 16px 16px 12px 16px;
       font-family: sans-serif;
     }
-    #modalBox h3 {
-      margin: 0 0 8px 0;
-      font-size: 16px;
-    }
-    #modalBox p {
-      margin: 0 0 12px 0;
-      font-size: 13px;
-      line-height: 1.4;
-      opacity: 0.9;
-    }
+    #modalBox h3 { margin: 0 0 8px 0; font-size: 16px; }
+    #modalBox p { margin: 0 0 12px 0; font-size: 13px; line-height: 1.4; opacity: 0.9; }
     #modalClose {
       display: inline-flex;
       align-items: center;
@@ -293,28 +275,80 @@
     #modalClose:hover { background: rgba(0,0,0,0.12); }
 
     /* =========================
-       Popup (tesela)
+       Popup MFV (estilo + badge + barra)
        ========================= */
-    .mfv-popup {
+    .mfv-popup .maplibregl-popup-content{
+      border-radius: 12px;
+      padding: 10px 10px 10px 10px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.25);
       font-family: sans-serif;
-      font-size: 12px;
+      min-width: 260px;
+    }
+    .mfv-popup .maplibregl-popup-close-button{
+      font-size: 18px;
+      padding: 2px 8px;
+      opacity: 0.7;
+    }
+
+    .mfv-pop-head{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 8px 0;
+    }
+    .mfv-pop-title{
+      font-weight: 800;
+      font-size: 13px;
+      margin: 0;
+    }
+    .mfv-badge{
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.18);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+      flex: 0 0 12px;
+    }
+
+    .mfv-pop-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      font-size: 12.5px;
       line-height: 1.25;
-      min-width: 220px;
     }
-    .mfv-popup .row {
-      display: flex;
-      gap: 8px;
-      margin: 4px 0;
+    .mfv-row{
+      display:flex;
+      justify-content: space-between;
+      gap:10px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      padding-top: 6px;
     }
-    .mfv-popup .k {
-      font-weight: 700;
-      white-space: nowrap;
-      opacity: 0.85;
-      flex: 0 0 auto;
+    .mfv-row:first-child{ border-top:0; padding-top:0; }
+
+    .mfv-k{ font-weight: 700; opacity: 0.75; white-space: nowrap; }
+    .mfv-v{ font-weight: 700; text-align:right; }
+    .mfv-v.mfv-wrap{ font-weight: 600; text-align:left; opacity: 0.9; }
+
+    .mfv-bar{
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.08);
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.10);
+      margin-top: 6px;
     }
-    .mfv-popup .v {
-      opacity: 0.95;
-      word-break: break-word;
+    .mfv-bar > div{
+      height: 100%;
+      width: 0%;
+      background: rgba(0,0,0,0.55);
+      border-radius: 999px;
+    }
+    .mfv-bar-note{
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -417,15 +451,11 @@
     // =========================
     const LOGO_URL = './data/geoeuskadi.png';
 
-    // Años temáticos (campos y_YYYY dentro del GeoJSON)
     const YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024];
     const DEFAULT_YEAR = 2018;
     const YEAR_FIELD_PREFIX = 'y_';
 
-    // GeoJSON polígonos (única capa)
     const ZOOMOUT_URL = './data/mfv_zoomout.geojson';
-
-    // Umbral de “pérdida de relleno” como la versión anterior
     const DETAIL_ZOOM = 13;
 
     const CLASS_COLORS = {
@@ -458,7 +488,7 @@
     }
 
     // =========================
-    // HELPERS bounds (polígonos)
+    // HELPERS bounds
     // =========================
     function extendBoundsFromCoords(bounds, coords) {
       if (!Array.isArray(coords) || coords.length === 0) return;
@@ -481,7 +511,7 @@
     }
 
     // =========================
-    // EXPRESIONES (color + opacidad “como antes”)
+    // EXPRESIONES
     // =========================
     function activeFieldForYear(year) {
       return `${YEAR_FIELD_PREFIX}${year}`;
@@ -499,7 +529,6 @@
       ];
     }
 
-    // Relleno se “vacía” al llegar a DETAIL_ZOOM (como la versión anterior)
     function fillOpacityExpr() {
       return [
         'interpolate', ['linear'], ['zoom'],
@@ -510,7 +539,6 @@
       ];
     }
 
-    // Bordes SIEMPRE visibles; ancho como antes (interpolado)
     function lineWidthExpr() {
       return [
         'interpolate', ['linear'], ['zoom'],
@@ -519,6 +547,37 @@
         DETAIL_ZOOM, 1.2,
         16, 1.8
       ];
+    }
+
+    // =========================
+    // FORMATOS (espacio como separador de miles)
+    // =========================
+    function formatNumberSpace(n, digits = 2) {
+      const num = Number(n);
+      if (!Number.isFinite(num)) return '—';
+      const s = new Intl.NumberFormat('es-ES', {
+        useGrouping: true,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: digits
+      }).format(num);
+      return s.replace(/\./g, ' ');
+    }
+
+    function formatProbPct(n) {
+      const num = Number(n);
+      if (!Number.isFinite(num)) return '—';
+      const s = new Intl.NumberFormat('es-ES', {
+        useGrouping: true,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 1
+      }).format(num).replace(/\./g, ' ');
+      return `${s}%`;
+    }
+
+    function clamp01(x) {
+      const n = Number(x);
+      if (!Number.isFinite(n)) return null;
+      return Math.max(0, Math.min(100, n));
     }
 
     // =========================
@@ -543,7 +602,6 @@
       zoom: 2
     });
 
-    // Zoom + escala discretos
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-right');
 
@@ -562,7 +620,7 @@
     });
 
     // =========================
-    // Toggle panel (derecha)
+    // Toggle panel
     // =========================
     const uiPanel = document.getElementById('uiPanel');
     const panelToggle = document.getElementById('panelToggle');
@@ -573,13 +631,10 @@
       panelOpen = open;
       if (panelOpen) {
         uiPanel.classList.remove('collapsed');
-        // Cerrado (cuando se pulse) = hacia fuera; Abierto = hacia fuera para cerrar.
-        // Según tu regla: cerrada -> flecha hacia dentro (se va a abrir),
-        // abierta -> flecha hacia fuera (se va a cerrar).
-        toggleIcon.textContent = '❯'; // panel abierto, indica "cierra hacia derecha"
+        toggleIcon.textContent = '❯';
       } else {
         uiPanel.classList.add('collapsed');
-        toggleIcon.textContent = '❮'; // panel cerrado, indica "abre hacia izquierda"
+        toggleIcon.textContent = '❮';
       }
     }
     panelToggle.addEventListener('click', (e) => {
@@ -609,7 +664,6 @@
     }
 
     function ensureBasemapBelow() {
-      // WMS debajo de MFV
       if (map.getLayer('satellite') && map.getLayer('mfv-fill')) {
         try { map.moveLayer('satellite', 'mfv-fill'); } catch (_) {}
       }
@@ -628,7 +682,6 @@
         return;
       }
 
-      // Fallback robusto
       if (map.getLayer('satellite')) map.removeLayer('satellite');
       if (map.getSource('satellite')) map.removeSource('satellite');
 
@@ -650,7 +703,6 @@
         btn.textContent = String(y);
         btn.dataset.year = String(y);
         btn.addEventListener('click', () => {
-          // Cambiar orto NO cambia año temático
           setBasemapYear(y);
           closeBasemapPanel();
         });
@@ -737,7 +789,6 @@
       const fieldName = activeFieldForYear(year);
       yearLabel.textContent = String(year);
 
-      // relleno + borde del MISMO color
       if (map.getLayer('mfv-fill')) map.setPaintProperty('mfv-fill', 'fill-color', colorExprForField(fieldName));
       if (map.getLayer('mfv-line')) map.setPaintProperty('mfv-line', 'line-color', colorExprForField(fieldName));
 
@@ -758,62 +809,87 @@
     }
 
     // =========================
-    // Popup (tesela)
+    // POPUP (badge por clase + barrita de confianza)
     // =========================
-    function escapeHtml(v) {
-      const s = String(v ?? '');
-      return s
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
+    let mfvPopup = null;
+
+    function classFromFeatureForYear(featureProps, year) {
+      const field = activeFieldForYear(year);
+      const v = Number(featureProps?.[field]);
+      return Number.isFinite(v) ? v : null;
     }
 
-    function formatNumber(v, decimals = 2) {
-      const n = Number(v);
-      if (!Number.isFinite(n)) return String(v ?? '');
-      return n.toFixed(decimals);
+    function colorForClass(cls) {
+      return (cls === 0 || cls === 1 || cls === 2 || cls === 3) ? CLASS_COLORS[cls] : 'rgba(0,0,0,0.25)';
     }
 
-    function popupHtml(props) {
-      const id = escapeHtml(props?.id);
-      const sup = escapeHtml(formatNumber(props?.sup, 2));
-      const resumen = escapeHtml(props?.resumen);
-      const prob = escapeHtml(formatNumber(props?.prob, 2));
+    function popupHTML(props) {
+      const sup = formatNumberSpace(props?.sup, 2);
+      const resumen = (props?.resumen ?? '—');
+
+      const probNum = clamp01(props?.prob);
+      const probText = (probNum === null) ? '—' : formatProbPct(probNum);
+
+      const cls = classFromFeatureForYear(props, activeYear);
+      const badgeColor = colorForClass(cls);
+
+      const barWidth = (probNum === null) ? 0 : probNum;
 
       return `
-        <div class="mfv-popup">
-          <div class="row"><div class="k">Tesela MFE:</div><div class="v">${id}</div></div>
-          <div class="row"><div class="k">Superficie (ha):</div><div class="v">${sup}</div></div>
-          <div class="row"><div class="k">Afección:</div><div class="v">${resumen}</div></div>
-          <div class="row"><div class="k">Confianza:</div><div class="v">${prob}</div></div>
+        <div class="mfv-pop-head">
+          <div class="mfv-pop-title">Tesela MFE</div>
+          <div class="mfv-badge" style="background:${badgeColor};"></div>
+        </div>
+
+        <div class="mfv-pop-grid">
+          <div class="mfv-row">
+            <div class="mfv-k">Superficie (ha):</div>
+            <div class="mfv-v">${sup}</div>
+          </div>
+
+          <div class="mfv-row" style="flex-direction:column; gap:4px;">
+            <div class="mfv-k">Afección:</div>
+            <div class="mfv-v mfv-wrap">${resumen}</div>
+          </div>
+
+          <div class="mfv-row" style="flex-direction:column; align-items:stretch; gap:6px;">
+            <div style="display:flex; justify-content:space-between; gap:10px;">
+              <div class="mfv-k">Confianza:</div>
+              <div class="mfv-v">${probText}</div>
+            </div>
+            <div class="mfv-bar" aria-label="Confianza">
+              <div style="width:${barWidth}%;"></div>
+            </div>
+            <div class="mfv-bar-note">0–100%</div>
+          </div>
         </div>
       `;
     }
 
-    let mfvPopup = null;
+    function closeMfvPopup() {
+      if (mfvPopup) {
+        mfvPopup.remove();
+        mfvPopup = null;
+      }
+    }
 
-    function bindMfvClickPopup() {
-      // Cursor "clicable"
-      map.on('mouseenter', 'mfv-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'mfv-fill', () => { map.getCanvas().style.cursor = ''; });
+    function openMfvPopup(lngLat, feature) {
+      closeMfvPopup();
+      mfvPopup = new maplibregl.Popup({
+        closeButton: true,
+        closeOnClick: true,
+        maxWidth: '340px',
+        offset: 10
+      })
+      .setLngLat(lngLat)
+      .setHTML(popupHTML(feature.properties || {}))
+      .addTo(map);
 
-      map.on('click', 'mfv-fill', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        const f = e.features[0];
+      try { mfvPopup.getElement().classList.add('mfv-popup'); } catch (_) {}
+    }
 
-        if (mfvPopup) mfvPopup.remove();
-        mfvPopup = new maplibregl.Popup({
-          closeButton: true,
-          closeOnClick: true,
-          maxWidth: '260px',
-          offset: 10
-        })
-          .setLngLat(e.lngLat)
-          .setHTML(popupHtml(f.properties || {}))
-          .addTo(map);
-      });
+    function setPointerCursor(on) {
+      map.getCanvas().style.cursor = on ? 'pointer' : '';
     }
 
     // =========================
@@ -823,7 +899,6 @@
       initYearSlider();
       initLegendHandlers();
 
-      // Cambiar año temático => sincroniza orto a ese año (si existe)
       yearSlider.addEventListener('input', () => {
         activeYear = yearFromIndex(yearSlider.value);
         applyYearStyle(activeYear);
@@ -833,7 +908,6 @@
         }
       });
 
-      // Fuente + capas MFV (zoomout)
       map.addSource('mfv', { type: 'geojson', data: ZOOMOUT_URL });
 
       map.addLayer({
@@ -857,11 +931,21 @@
         }
       });
 
-      // Popup clic
-      bindMfvClickPopup();
-
       ensureBasemapBelow();
       applyYearStyle(activeYear);
+
+      map.on('mouseenter', 'mfv-fill', () => setPointerCursor(true));
+      map.on('mouseleave', 'mfv-fill', () => setPointerCursor(false));
+      map.on('mouseenter', 'mfv-line', () => setPointerCursor(true));
+      map.on('mouseleave', 'mfv-line', () => setPointerCursor(false));
+
+      map.on('click', (e) => {
+        const feats = map.queryRenderedFeatures(e.point, { layers: ['mfv-fill', 'mfv-line'] });
+        if (!feats || feats.length === 0) return;
+
+        const f = feats.find(x => x.layer && x.layer.id === 'mfv-fill') || feats[0];
+        openMfvPopup(e.lngLat, f);
+      });
 
       // FitBounds
       try {
